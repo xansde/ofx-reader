@@ -31,8 +31,12 @@ CATEGORIES = {
     "756": [  # Sicoob
         ("PIX RECEBIDO", "PIX recebido"),
         ("PIX EMITIDO", "PIX enviado"),
+        ("TRANSF.REALIZADA PIX SICOOB", "PIX enviado"),
+        ("PIX EMIT.OUTRA IF", "PIX enviado"),
+        ("PIX.EMIT.OUT IF-MSM", "PIX enviado"),
         ("CRÉD.LIQUIDAÇÃO COBRANÇA", "Boleto creditado"),
         ("CRÉD.TED-STR", "TED recebida"),
+        ("DÉB.TIT.COMPE.EFETI", "Boleto pago"),
         ("DÉB.TIT.COMPE", "Boleto pago"),
         ("DÉB.CONV.EN.ELÉTRICA", "Boleto pago"),
         ("DÉB.CONV.GÁS", "Boleto pago"),
@@ -40,12 +44,43 @@ CATEGORIES = {
         ("CRÉD.TRANSF.CONTAS", "Transferência/entre contas"),
         ("CRED.TRANSF.CONTAS", "Transferência/entre contas"),
         ("PAGAMENTO SALARIO", "Folha de pagamento"),
+        ("RESGATE RDC", "Resgate de aplicação"),
         ("TARIFA COBRANÇA", "Tarifa bancária"),
         ("DÉBITO PACOTE SERVIÇOS", "Tarifa bancária"),
+        ("DEB PACOTE SERVIÇOS", "Tarifa bancária"),
         ("DÉB.IOF", "Impostos/tributos"),
         ("DÉB.EMPRÉSTIMO", "Outros débitos"),
         ("JUROS CONTA GARANTIDA", "Outros débitos"),
         ("DEB.PARCELAS", "Outros débitos"),
+        ("DÉBITO SAQUE", "Outros débitos"),
+        ("DÉB. CONV. SEGUROS", "Outros débitos"),
+        ("DEB.PARC.SUBS/INTEG", "Outros débitos"),
+        ("DÉB.CONV.ORGÃOS GOV", "Outros débitos"),
+    ],
+    "104": [  # Caixa Econômica Federal
+        ("CRE PIX", "PIX recebido"),
+        ("CRED PIX", "PIX recebido"),
+        ("TAR PIX", "Tarifa bancária"),
+        ("PREST EMP", "Parcela de empréstimo"),
+        ("CPP CA CR", "Transferência/entre contas"),
+        ("DB T CESTA", "Tarifa bancária"),
+    ],
+    "341": [  # Itaú
+        ("PIX RECEBIDO", "PIX recebido"),
+        ("PIX ENVIADO", "PIX enviado"),
+        ("BOLETO PAGO", "Boleto pago"),
+        ("TAR PLANO", "Tarifa bancária"),
+        ("RENDIMENTOS", "Rendimento de aplicação"),
+        ("REND PAGO APLIC", "Rendimento de aplicação"),
+        ("PAGAMENTOS TRIB COD BARRAS", "Impostos/tributos"),
+        ("PAGAMENTOS PIX QR-CODE", "PIX enviado"),
+    ],
+    "001": [  # Banco do Brasil
+        ("Pix - Recebido", "PIX recebido"),
+        ("Pix - Enviado", "PIX enviado"),
+        ("BB Rende Fácil", "Resgate/Investimento"),
+        ("Brasilprev", "Outros débitos"),
+        ("Cobrança de Juros", "Tarifa bancária"),
     ],
 }
 
@@ -56,7 +91,7 @@ CARD_PATTERNS = {
     ],
 }
 
-INVESTMENT_KEYWORDS = ["RESGATE", "APLICAÇÃO", "APLICACAO"]
+INVESTMENT_KEYWORDS = ["RESGATE", "APLICAÇÃO", "APLICACAO", "BB RENDE FÁCIL", "BB RENDE FACIL", "BRASILPREV"]
 
 
 def categorize_transaction(memo: str, amount: float, bank_id: str) -> str:
@@ -66,6 +101,8 @@ def categorize_transaction(memo: str, amount: float, bank_id: str) -> str:
             return category
     for pattern, category in CATEGORIES.get(bank_id, []):
         if pattern.upper() in upper:
+            if category == "Resgate/Investimento":
+                return "Resgate de aplicação" if amount >= 0 else "Investimento em aplicação"
             return category
     return "Outros créditos" if amount >= 0 else "Outros débitos"
 
