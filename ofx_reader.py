@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Standalone OFX file reader — shows transactions in a formatted table."""
 
+import csv
+import io
 import re
 import sys
 from datetime import datetime
@@ -190,10 +192,36 @@ def print_table(bank: dict, transactions: list[dict]) -> None:
     print(f"{'=' * 110}\n")
 
 
+def export_csv(transactions: list[dict], output_path: Path) -> None:
+    with open(output_path, "w", newline="", encoding="utf-8-sig") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            "Data", "Mês", "Tipo", "Categoria", "Valor",
+            "Conta_Entrada_sem_resgates", "Conta_Saida_sem_aplicação", "Descricao"
+        ])
+        for t in sorted(transactions, key=lambda x: x["date"]):
+            writer.writerow([
+                t["date"],
+                t["month"],
+                t["type"],
+                t["category"],
+                f'{t["amount"]:.2f}'.replace(".", ","),
+                t["entrada_sem_resgates"],
+                t["saida_sem_aplicacao"],
+                t["memo"],
+            ])
+
+
 def main():
     if len(sys.argv) < 2:
         print("Uso: python ofx_reader.py <arquivo.ofx>")
         sys.exit(1)
+
+    csv_path = None
+    if "--csv" in sys.argv:
+        idx = sys.argv.index("--csv")
+        if idx + 1 < len(sys.argv):
+            csv_path = Path(sys.argv[idx + 1])
 
     filepath = Path(sys.argv[1])
     if not filepath.exists():
@@ -216,6 +244,10 @@ def main():
         sys.exit(1)
 
     print_table(bank, transactions)
+
+    if csv_path:
+        export_csv(transactions, csv_path)
+        print(f"CSV exportado: {csv_path}")
 
 
 if __name__ == "__main__":
