@@ -106,7 +106,7 @@ def parse_date(raw: str) -> str:
     return dt.strftime("%d/%m/%Y")
 
 
-def parse_transactions(content: str) -> list[dict]:
+def parse_transactions(content: str, bank_id: str) -> list[dict]:
     transactions = []
     blocks = re.findall(r"<STMTTRN>(.*?)</STMTTRN>", content, re.DOTALL)
 
@@ -117,11 +117,18 @@ def parse_transactions(content: str) -> list[dict]:
         except ValueError:
             amount = 0.0
 
+        memo = extract_tag(block, "MEMO")
+        date = parse_date(extract_tag(block, "DTPOSTED"))
+
         transactions.append({
-            "date": parse_date(extract_tag(block, "DTPOSTED")),
-            "category": "Entrada" if amount >= 0 else "Saída",
+            "date": date,
+            "month": derive_month(date),
+            "type": "Entrada" if amount >= 0 else "Saída",
+            "category": categorize_transaction(memo, amount, bank_id),
             "amount": amount,
-            "memo": extract_tag(block, "MEMO"),
+            "entrada_sem_resgates": is_entrada_sem_resgates(amount, memo),
+            "saida_sem_aplicacao": is_saida_sem_aplicacao(amount, memo),
+            "memo": memo,
         })
 
     return transactions
@@ -151,33 +158,36 @@ def format_brl(value: float) -> str:
 
 
 def print_table(bank: dict, transactions: list[dict]) -> None:
-    print(f"\n{'=' * 72}")
+    print(f"\n{'=' * 110}")
     print(f"  Banco: {bank['bank_name']}  |  Conta: {bank['account']}")
     if bank["balance"] is not None:
         print(f"  Saldo: {format_brl(bank['balance'])}")
-    print(f"{'=' * 72}")
+    print(f"{'=' * 110}")
 
-    header = f"{'Data':<12} {'Categoria':<10} {'Valor':>16}  {'Descrição'}"
+    header = f"{'Data':<12} {'Mês':<8} {'Tipo':<8} {'Categoria':<30} {'Valor':>14}  {'E.s/R':>5} {'S.s/A':>5}  {'Descrição'}"
     print(f"\n{header}")
-    print("-" * 72)
+    print("-" * 110)
 
     total_in = 0.0
     total_out = 0.0
 
     for t in sorted(transactions, key=lambda x: x["date"]):
-        cat_display = f"\033[32m{'Entrada':<10}\033[0m" if t["category"] == "Entrada" else f"\033[31m{'Saída':<10}\033[0m"
-        print(f"{t['date']:<12} {cat_display} {format_brl(t['amount']):>16}  {t['memo']}")
+        tipo = f"\033[32m{'Entrada':<8}\033[0m" if t["type"] == "Entrada" else f"\033[31m{'Saída':<8}\033[0m"
+        e_flag = "TRUE" if t["entrada_sem_resgates"] else ""
+        s_flag = "TRUE" if t["saida_sem_aplicacao"] else ""
+        desc = t["memo"][:40]
+        print(f"{t['date']:<12} {t['month']:<8} {tipo} {t['category']:<30} {format_brl(t['amount']):>14}  {e_flag:>5} {s_flag:>5}  {desc}")
 
         if t["amount"] >= 0:
             total_in += t["amount"]
         else:
             total_out += t["amount"]
 
-    print("-" * 72)
-    print(f"{'Total Entradas:':<24} \033[32m{format_brl(total_in):>16}\033[0m")
-    print(f"{'Total Saídas:':<24} \033[31m{format_brl(total_out):>16}\033[0m")
-    print(f"{'Resultado:':<24} {format_brl(total_in + total_out):>16}")
-    print(f"{'=' * 72}\n")
+    print("-" * 110)
+    print(f"{'Total Entradas:':<24} \033[32m{format_brl(total_in):>14}\033[0m")
+    print(f"{'Total Saídas:':<24} \033[31m{format_brl(total_out):>14}\033[0m")
+    print(f"{'Resultado:':<24} {format_brl(total_in + total_out):>14}")
+    print(f"{'=' * 110}\n")
 
 
 def main():
@@ -199,7 +209,7 @@ def main():
     else:
         content = filepath.read_text(encoding="utf-8", errors="replace")
     bank = parse_bank(content)
-    transactions = parse_transactions(content)
+    transactions = parse_transactions(content, bank["bank_id"])
 
     if not transactions:
         print("Nenhuma transação encontrada no arquivo.")
