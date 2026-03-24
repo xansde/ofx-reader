@@ -25,6 +25,68 @@ BANKS = {
     "403": "Cora",
 }
 
+CATEGORIES = {
+    "756": [  # Sicoob
+        ("PIX RECEBIDO", "PIX recebido"),
+        ("PIX EMITIDO", "PIX enviado"),
+        ("CRÉD.LIQUIDAÇÃO COBRANÇA", "Boleto creditado"),
+        ("CRÉD.TED-STR", "TED recebida"),
+        ("DÉB.TIT.COMPE", "Boleto pago"),
+        ("DÉB.CONV.EN.ELÉTRICA", "Boleto pago"),
+        ("DÉB.CONV.GÁS", "Boleto pago"),
+        ("DÉB.TRANSF.CONTAS", "Transferência/entre contas"),
+        ("CRÉD.TRANSF.CONTAS", "Transferência/entre contas"),
+        ("PAGAMENTO SALARIO", "Folha de pagamento"),
+        ("TARIFA COBRANÇA", "Tarifa bancária"),
+        ("DÉBITO PACOTE SERVIÇOS", "Tarifa bancária"),
+        ("DÉB.IOF", "Impostos/tributos"),
+        ("DÉB.EMPRÉSTIMO", "Outros débitos"),
+        ("JUROS CONTA GARANTIDA", "Outros débitos"),
+        ("DEB.PARCELAS", "Outros débitos"),
+    ],
+}
+
+CARD_PATTERNS = {
+    "756": [
+        (["MASTERCARD", "DÉB.CONV"], "Pagamento Cartão de Crédito"),
+        (["VISA", "DÉB.CONV"], "Pagamento Cartão de Crédito"),
+    ],
+}
+
+INVESTMENT_KEYWORDS = ["RESGATE", "APLICAÇÃO", "APLICACAO"]
+
+
+def categorize_transaction(memo: str, amount: float, bank_id: str) -> str:
+    upper = memo.upper()
+    for keywords, category in CARD_PATTERNS.get(bank_id, []):
+        if all(k.upper() in upper for k in keywords):
+            return category
+    for pattern, category in CATEGORIES.get(bank_id, []):
+        if pattern.upper() in upper:
+            return category
+    return "Outros créditos" if amount >= 0 else "Outros débitos"
+
+
+def derive_month(date_str: str) -> str:
+    parts = date_str.split("/")
+    if len(parts) == 3:
+        return f"{parts[2]}-{parts[1]}"
+    return ""
+
+
+def is_entrada_sem_resgates(amount: float, memo: str) -> bool:
+    if amount < 0:
+        return False
+    upper = memo.upper()
+    return not any(k in upper for k in INVESTMENT_KEYWORDS)
+
+
+def is_saida_sem_aplicacao(amount: float, memo: str) -> bool:
+    if amount >= 0:
+        return False
+    upper = memo.upper()
+    return not any(k in upper for k in INVESTMENT_KEYWORDS)
+
 
 def extract_tag(text: str, tag: str) -> str:
     pattern = rf"<{tag}>\s*(.+?)(?:\s*<|\s*$)"
