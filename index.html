@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OFX Reader</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e1e4e8;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container { max-width: 900px; margin: 0 auto; }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: #f0f0f0;
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 0.4rem; }
+    .field label { font-size: 0.8rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    select, .file-label {
+      background: #161b22;
+      border: 1px solid #30363d;
+      color: #e1e4e8;
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    select:hover, .file-label:hover { border-color: #58a6ff; }
+    select:focus { outline: none; border-color: #58a6ff; }
+
+    .file-label {
+      display: inline-block;
+      text-align: center;
+      min-width: 180px;
+    }
+
+    .file-label.has-file { border-color: #3fb950; color: #3fb950; }
+
+    input[type="file"] { display: none; }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+    }
+
+    .card .label { font-size: 0.75rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; }
+    .card .value { font-size: 1.3rem; font-weight: 600; margin-top: 0.3rem; }
+    .card .value.green { color: #3fb950; }
+    .card .value.red { color: #f85149; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #161b22;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    thead { background: #1c2129; }
+
+    th {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    th:nth-child(3) { text-align: right; }
+
+    td {
+      padding: 0.65rem 1rem;
+      border-top: 1px solid #21262d;
+      font-size: 0.9rem;
+    }
+
+    td:nth-child(3) { text-align: right; font-family: 'SF Mono', 'Fira Code', monospace; }
+
+    .tag {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+
+    .tag.entrada { background: #0d3321; color: #3fb950; }
+    .tag.saida { background: #3d1318; color: #f85149; }
+
+    .empty {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #484f58;
+      font-size: 0.95rem;
+    }
+
+    .table-wrapper {
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>OFX Reader</h1>
+
+    <div class="controls">
+      <div class="field">
+        <label>Banco</label>
+        <select id="bank-select">
+          <option value="756">Sicoob</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Arquivo</label>
+        <label class="file-label" id="file-label" for="file-input">Selecionar .ofx</label>
+        <input type="file" id="file-input" accept=".ofx,.OFX">
+      </div>
+    </div>
+
+    <div id="results" style="display:none;">
+      <div class="summary">
+        <div class="card">
+          <div class="label">Conta</div>
+          <div class="value" id="account">—</div>
+        </div>
+        <div class="card">
+          <div class="label">Entradas</div>
+          <div class="value green" id="total-in">R$ 0,00</div>
+        </div>
+        <div class="card">
+          <div class="label">Saídas</div>
+          <div class="value red" id="total-out">R$ 0,00</div>
+        </div>
+        <div class="card">
+          <div class="label">Saldo</div>
+          <div class="value" id="balance">R$ 0,00</div>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Categoria</th>
+              <th>Valor</th>
+              <th>Descrição</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="empty" id="empty-state">
+      Selecione um arquivo OFX para visualizar as transações
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const fileLabel = document.getElementById('file-label');
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      fileLabel.textContent = file.name;
+      fileLabel.classList.add('has-file');
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        let text = ev.target.result;
+        if (text.includes('\ufffd')) {
+          const latin1Reader = new FileReader();
+          latin1Reader.onload = (e2) => parseOFX(e2.target.result);
+          latin1Reader.readAsText(file, 'windows-1252');
+        } else {
+          parseOFX(text);
+        }
+      };
+      reader.readAsText(file, 'utf-8');
+    });
+
+    function extractTag(text, tag) {
+      const re = new RegExp(`<${tag}>\\s*(.+?)(?:\\s*<|\\s*$)`, 's');
+      const m = text.match(re);
+      return m ? m[1].trim() : '';
+    }
+
+    function parseDate(raw) {
+      const clean = raw.split('[')[0].trim();
+      if (clean.length >= 8) {
+        const y = clean.slice(0, 4);
+        const m = clean.slice(4, 6);
+        const d = clean.slice(6, 8);
+        return `${d}/${m}/${y}`;
+      }
+      return clean;
+    }
+
+    function formatBRL(value) {
+      const sign = value < 0 ? '-' : '';
+      const abs = Math.abs(value).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      return `${sign}R$ ${abs}`;
+    }
+
+    function parseOFX(content) {
+      const account = extractTag(content, 'ACCTID');
+      const balanceStr = extractTag(content, 'BALAMT');
+      const balance = parseFloat(balanceStr.replace(',', '.')) || 0;
+
+      const blocks = [...content.matchAll(/<STMTTRN>([\s\S]*?)<\/STMTTRN>/g)];
+      const transactions = blocks.map(m => {
+        const block = m[1];
+        const amount = parseFloat(extractTag(block, 'TRNAMT').replace(',', '.')) || 0;
+        return {
+          date: parseDate(extractTag(block, 'DTPOSTED')),
+          category: amount >= 0 ? 'Entrada' : 'Saída',
+          amount,
+          memo: extractTag(block, 'MEMO'),
+        };
+      });
+
+      transactions.sort((a, b) => a.date.localeCompare(b.date));
+      render(account, balance, transactions);
+    }
+
+    function render(account, balance, transactions) {
+      document.getElementById('empty-state').style.display = 'none';
+      document.getElementById('results').style.display = 'block';
+
+      document.getElementById('account').textContent = account || '—';
+
+      let totalIn = 0, totalOut = 0;
+      transactions.forEach(t => {
+        if (t.amount >= 0) totalIn += t.amount;
+        else totalOut += t.amount;
+      });
+
+      document.getElementById('total-in').textContent = formatBRL(totalIn);
+      document.getElementById('total-out').textContent = formatBRL(totalOut);
+      document.getElementById('balance').textContent = formatBRL(balance || totalIn + totalOut);
+
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = transactions.map(t => `
+        <tr>
+          <td>${t.date}</td>
+          <td><span class="tag ${t.category === 'Entrada' ? 'entrada' : 'saida'}">${t.category}</span></td>
+          <td>${formatBRL(t.amount)}</td>
+          <td>${t.memo}</td>
+        </tr>
+      `).join('');
+    }
+  </script>
+</body>
+</html>
