@@ -15,7 +15,7 @@
       padding: 2rem;
     }
 
-    .container { max-width: 900px; margin: 0 auto; }
+    .container { max-width: 1200px; margin: 0 auto; }
 
     h1 {
       font-size: 1.5rem;
@@ -98,7 +98,7 @@
       font-weight: 600;
     }
 
-    th:nth-child(3) { text-align: right; }
+    th:nth-child(5) { text-align: right; }
 
     td {
       padding: 0.65rem 1rem;
@@ -106,7 +106,8 @@
       font-size: 0.9rem;
     }
 
-    td:nth-child(3) { text-align: right; font-family: 'SF Mono', 'Fira Code', monospace; }
+    td:nth-child(5) { text-align: right; font-family: 'SF Mono', 'Fira Code', monospace; }
+    td:nth-child(6), td:nth-child(7) { text-align: center; font-size: 0.8rem; color: #8b949e; }
 
     .tag {
       display: inline-block;
@@ -151,6 +152,8 @@
       </div>
     </div>
 
+    <button id="export-csv" style="display:none;" class="file-label">Exportar CSV</button>
+
     <div id="results" style="display:none;">
       <div class="summary">
         <div class="card">
@@ -176,9 +179,13 @@
           <thead>
             <tr>
               <th>Data</th>
+              <th>Mes</th>
+              <th>Tipo</th>
               <th>Categoria</th>
               <th>Valor</th>
-              <th>Descrição</th>
+              <th>Ent.s/R</th>
+              <th>Sai.s/A</th>
+              <th>Descricao</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -328,6 +335,7 @@
     function render(account, balance, transactions) {
       document.getElementById('empty-state').style.display = 'none';
       document.getElementById('results').style.display = 'block';
+      document.getElementById('export-csv').style.display = 'inline-block';
 
       document.getElementById('account').textContent = account || '—';
 
@@ -345,12 +353,36 @@
       tbody.innerHTML = transactions.map(t => `
         <tr>
           <td>${t.date}</td>
-          <td><span class="tag ${t.category === 'Entrada' ? 'entrada' : 'saida'}">${t.category}</span></td>
+          <td>${t.month}</td>
+          <td><span class="tag ${t.type === 'Entrada' ? 'entrada' : 'saida'}">${t.type}</span></td>
+          <td>${t.category}</td>
           <td>${formatBRL(t.amount)}</td>
+          <td>${t.entradaSemResgates ? 'TRUE' : ''}</td>
+          <td>${t.saidaSemAplicacao ? 'TRUE' : ''}</td>
           <td>${t.memo}</td>
         </tr>
       `).join('');
+
+      window._transactions = transactions;
     }
+
+    document.getElementById('export-csv').addEventListener('click', () => {
+      const t = window._transactions;
+      if (!t || !t.length) return;
+
+      const header = 'Data,Mês,Tipo,Categoria,Valor,Conta_Entrada_sem_resgates,Conta_Saida_sem_aplicação,Descricao\n';
+      const rows = t.map(r =>
+        `${r.date},${r.month},${r.type},${r.category},"${r.amount.toFixed(2).replace('.', ',')}",${r.entradaSemResgates},${r.saidaSemAplicacao},"${r.memo.replace(/"/g, '""')}"`
+      ).join('\n');
+
+      const blob = new Blob(['\uFEFF' + header + rows], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'extrato.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
   </script>
 </body>
 </html>
