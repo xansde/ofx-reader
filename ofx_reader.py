@@ -38,6 +38,7 @@ CATEGORIES = {
         ("DÉB.CONV.GÁS", "Boleto pago"),
         ("DÉB.TRANSF.CONTAS", "Transferência/entre contas"),
         ("CRÉD.TRANSF.CONTAS", "Transferência/entre contas"),
+        ("CRED.TRANSF.CONTAS", "Transferência/entre contas"),
         ("PAGAMENTO SALARIO", "Folha de pagamento"),
         ("TARIFA COBRANÇA", "Tarifa bancária"),
         ("DÉBITO PACOTE SERVIÇOS", "Tarifa bancária"),

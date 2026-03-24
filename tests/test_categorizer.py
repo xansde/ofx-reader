@@ -20,6 +20,9 @@ def test_ted_recebida():
 def test_transferencia():
     assert categorize_transaction("4009615 DÉB.TRANSF.CONTAS DIF.TITULARIDADE", -1200.0, "756") == "Transferência/entre contas"
 
+def test_transferencia_sem_acento():
+    assert categorize_transaction("CRED.TRANSF.CONTAS INTERCREDIS", 3250.0, "756") == "Transferência/entre contas"
+
 def test_folha_pagamento():
     assert categorize_transaction("4011265 DEBITO PAGAMENTO SALARIO", -42800.30, "756") == "Folha de pagamento"
 
