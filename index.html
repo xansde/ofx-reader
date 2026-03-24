@@ -239,20 +239,85 @@
       return `${sign}R$ ${abs}`;
     }
 
+    const CATEGORIES = {
+      '756': [ // Sicoob
+        ['PIX RECEBIDO', 'PIX recebido'],
+        ['PIX EMITIDO', 'PIX enviado'],
+        ['CRÉD.LIQUIDAÇÃO COBRANÇA', 'Boleto creditado'],
+        ['CRÉD.TED-STR', 'TED recebida'],
+        ['DÉB.TIT.COMPE', 'Boleto pago'],
+        ['DÉB.CONV.EN.ELÉTRICA', 'Boleto pago'],
+        ['DÉB.CONV.GÁS', 'Boleto pago'],
+        ['DÉB.TRANSF.CONTAS', 'Transferência/entre contas'],
+        ['CRÉD.TRANSF.CONTAS', 'Transferência/entre contas'],
+        ['PAGAMENTO SALARIO', 'Folha de pagamento'],
+        ['TARIFA COBRANÇA', 'Tarifa bancária'],
+        ['DÉBITO PACOTE SERVIÇOS', 'Tarifa bancária'],
+        ['DÉB.IOF', 'Impostos/tributos'],
+        ['DÉB.EMPRÉSTIMO', 'Outros débitos'],
+        ['JUROS CONTA GARANTIDA', 'Outros débitos'],
+        ['DEB.PARCELAS', 'Outros débitos'],
+      ],
+    };
+
+    const CARD_PATTERNS = {
+      '756': [
+        [['MASTERCARD', 'DÉB.CONV'], 'Pagamento Cartão de Crédito'],
+        [['VISA', 'DÉB.CONV'], 'Pagamento Cartão de Crédito'],
+      ],
+    };
+
+    const INVESTMENT_KW = ['RESGATE', 'APLICAÇÃO', 'APLICACAO'];
+
+    function categorize(memo, amount, bankId) {
+      const upper = memo.toUpperCase();
+      for (const [keywords, cat] of (CARD_PATTERNS[bankId] || [])) {
+        if (keywords.every(k => upper.includes(k.toUpperCase()))) return cat;
+      }
+      for (const [pattern, cat] of (CATEGORIES[bankId] || [])) {
+        if (upper.includes(pattern.toUpperCase())) return cat;
+      }
+      return amount >= 0 ? 'Outros créditos' : 'Outros débitos';
+    }
+
+    function deriveMonth(dateStr) {
+      const p = dateStr.split('/');
+      return p.length === 3 ? `${p[2]}-${p[1]}` : '';
+    }
+
+    function isEntradaSemResgates(amount, memo) {
+      if (amount < 0) return false;
+      const u = memo.toUpperCase();
+      return !INVESTMENT_KW.some(k => u.includes(k));
+    }
+
+    function isSaidaSemAplicacao(amount, memo) {
+      if (amount >= 0) return false;
+      const u = memo.toUpperCase();
+      return !INVESTMENT_KW.some(k => u.includes(k));
+    }
+
     function parseOFX(content) {
       const account = extractTag(content, 'ACCTID');
       const balanceStr = extractTag(content, 'BALAMT');
       const balance = parseFloat(balanceStr.replace(',', '.')) || 0;
+      const bankId = document.getElementById('bank-select').value;
 
       const blocks = [...content.matchAll(/<STMTTRN>([\s\S]*?)<\/STMTTRN>/g)];
       const transactions = blocks.map(m => {
         const block = m[1];
         const amount = parseFloat(extractTag(block, 'TRNAMT').replace(',', '.')) || 0;
+        const memo = extractTag(block, 'MEMO');
+        const date = parseDate(extractTag(block, 'DTPOSTED'));
         return {
-          date: parseDate(extractTag(block, 'DTPOSTED')),
-          category: amount >= 0 ? 'Entrada' : 'Saída',
+          date,
+          month: deriveMonth(date),
+          type: amount >= 0 ? 'Entrada' : 'Saída',
+          category: categorize(memo, amount, bankId),
           amount,
-          memo: extractTag(block, 'MEMO'),
+          entradaSemResgates: isEntradaSemResgates(amount, memo),
+          saidaSemAplicacao: isSaidaSemAplicacao(amount, memo),
+          memo,
         };
       });
 
