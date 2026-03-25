@@ -1,0 +1,42 @@
+{
+  "name": "ofx-reader",
+  "version": "1.0.0",
+  "description": "Leitor de extratos bancários OFX com categorização automática",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win --x64",
+    "build:linux": "electron-builder --linux",
+    "test": "python3 -m pytest tests/ -v"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xansde/ofx-reader.git"
+  },
+  "author": "Alexandre Lentz",
+  "license": "MIT",
+  "build": {
+    "appId": "com.xansde.ofx-reader",
+    "productName": "OFX Reader",
+    "files": [
+      "main.js",
+      "index.html"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  },
+  "devDependencies": {
+    "electron": "^41.0.3",
+    "electron-builder": "^26.8.1"
+  }
+}
