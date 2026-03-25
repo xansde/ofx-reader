@@ -17,17 +17,47 @@
 
     .container { max-width: 1200px; margin: 0 auto; }
 
-    h1 {
+    /* Header bar */
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .header-bar h1 {
       font-size: 1.5rem;
       font-weight: 600;
-      margin-bottom: 1.5rem;
       color: #f0f0f0;
     }
 
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    /* Sections */
+    .section {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+      font-size: 0.8rem;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    /* Controls */
     .controls {
       display: flex;
       gap: 1rem;
-      margin-bottom: 2rem;
       align-items: end;
       flex-wrap: wrap;
     }
@@ -35,8 +65,8 @@
     .field { display: flex; flex-direction: column; gap: 0.4rem; }
     .field label { font-size: 0.8rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; }
 
-    select, .file-label {
-      background: #161b22;
+    select, input[type="text"], input[type="date"], .file-label {
+      background: #0f1117;
       border: 1px solid #30363d;
       color: #e1e4e8;
       padding: 0.6rem 1rem;
@@ -46,19 +76,57 @@
       transition: border-color 0.2s;
     }
 
-    select:hover, .file-label:hover { border-color: #58a6ff; }
-    select:focus { outline: none; border-color: #58a6ff; }
+    input[type="text"] { cursor: text; min-width: 180px; }
+    input[type="date"] { cursor: text; }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); }
+
+    select:hover, .file-label:hover, input[type="text"]:hover, input[type="date"]:hover { border-color: #58a6ff; }
+    select:focus, input[type="text"]:focus, input[type="date"]:focus { outline: none; border-color: #58a6ff; }
 
     .file-label {
       display: inline-block;
       text-align: center;
-      min-width: 180px;
+      min-width: 160px;
     }
 
     .file-label.has-file { border-color: #3fb950; color: #3fb950; }
 
     input[type="file"] { display: none; }
 
+    /* Buttons */
+    .btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #e1e4e8;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { border-color: #58a6ff; color: #58a6ff; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: #30363d; color: #8b949e; }
+    .btn:disabled:hover { border-color: #30363d; color: #8b949e; }
+
+    .btn-primary {
+      background: #238636;
+      border-color: #2ea043;
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: #2ea043; border-color: #3fb950; color: #fff; }
+
+    .btn-blue {
+      background: #1f6feb;
+      border-color: #388bfd;
+      color: #fff;
+    }
+
+    .btn-blue:hover { background: #388bfd; border-color: #58a6ff; color: #fff; }
+
+    /* Summary cards */
     .summary {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -78,6 +146,7 @@
     .card .value.green { color: #3fb950; }
     .card .value.red { color: #f85149; }
 
+    /* Tables */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -98,7 +167,7 @@
       font-weight: 600;
     }
 
-    th:nth-child(5) { text-align: right; }
+    th.align-right { text-align: right; }
 
     td {
       padding: 0.65rem 1rem;
@@ -106,8 +175,8 @@
       font-size: 0.9rem;
     }
 
-    td:nth-child(5) { text-align: right; font-family: 'SF Mono', 'Fira Code', monospace; }
-    td:nth-child(6), td:nth-child(7) { text-align: center; font-size: 0.8rem; color: #8b949e; }
+    td.align-right { text-align: right; font-family: 'SF Mono', 'Fira Code', monospace; }
+    td.align-center { text-align: center; font-size: 0.8rem; color: #8b949e; }
 
     .tag {
       display: inline-block;
@@ -132,51 +201,192 @@
       border-radius: 8px;
       overflow: hidden;
     }
+
+    /* Category summary table */
+    .cat-summary {
+      margin-bottom: 1.5rem;
+    }
+
+    .cat-summary table { font-size: 0.9rem; }
+    .cat-summary td { padding: 0.5rem 1rem; }
+
+    /* Preview notice */
+    .preview-notice {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding: 0.6rem 1rem;
+      background: #1c2129;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #8b949e;
+    }
+
+    .preview-notice strong { color: #e1e4e8; }
+
+    /* Hidden helper */
+    .hidden { display: none !important; }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: #238636;
+      color: #fff;
+      padding: 0.8rem 1.4rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Results export row */
+    .results-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 1rem;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>OFX Reader</h1>
 
-    <div class="controls">
-      <div class="field">
-        <label>Banco</label>
-        <select id="bank-select">
-          <option value="756">Sicoob</option>
-          <option value="104">Caixa Econômica</option>
-          <option value="341">Itaú</option>
-          <option value="001">Banco do Brasil</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Arquivo</label>
-        <label class="file-label" id="file-label" for="file-input">Selecionar .ofx</label>
-        <input type="file" id="file-input" accept=".ofx,.OFX">
+    <!-- Header -->
+    <div class="header-bar">
+      <h1>OFX Reader</h1>
+      <div class="header-actions">
+        <label class="btn" for="json-upload">Carregar Historico</label>
+        <input type="file" id="json-upload" accept=".json">
+        <button class="btn" id="btn-save" disabled>Salvar Historico</button>
       </div>
     </div>
 
-    <button id="export-csv" style="display:none;" class="file-label">Exportar CSV</button>
+    <!-- Import Section -->
+    <div class="section" id="import-section">
+      <div class="section-title">Importar OFX</div>
+      <div class="controls">
+        <div class="field">
+          <label>Banco</label>
+          <select id="bank-select">
+            <option value="756">Sicoob</option>
+            <option value="104">Caixa Economica</option>
+            <option value="341">Itau</option>
+            <option value="001">Banco do Brasil</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Conta</label>
+          <select id="account-select">
+            <option value="__new__">Nova conta...</option>
+          </select>
+        </div>
+        <div class="field hidden" id="new-account-field">
+          <label>Nome da conta</label>
+          <input type="text" id="new-account-name" placeholder="Ex: Sicoob Principal">
+        </div>
+        <div class="field">
+          <label>Arquivo</label>
+          <label class="file-label" id="file-label" for="file-input">Selecionar .ofx</label>
+          <input type="file" id="file-input" accept=".ofx,.OFX">
+        </div>
+      </div>
 
-    <div id="results" style="display:none;">
+      <!-- Preview area -->
+      <div id="preview-area" class="hidden" style="margin-top: 1.2rem;">
+        <div class="preview-notice">
+          <span><strong id="preview-count">0</strong> transacoes encontradas</span>
+          <button class="btn btn-primary" id="btn-add-to-store">Adicionar ao Historico</button>
+        </div>
+        <div class="table-wrapper" style="max-height: 400px; overflow-y: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Mes</th>
+                <th>Tipo</th>
+                <th>Categoria</th>
+                <th class="align-right">Valor</th>
+                <th>Ent.s/R</th>
+                <th>Sai.s/A</th>
+                <th>Descricao</th>
+              </tr>
+            </thead>
+            <tbody id="preview-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="section" id="filter-section">
+      <div class="section-title">Filtros</div>
+      <div class="controls">
+        <div class="field">
+          <label>Conta</label>
+          <select id="filter-account">
+            <option value="__all__">Todas</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Data inicio</label>
+          <input type="date" id="filter-date-start">
+        </div>
+        <div class="field">
+          <label>Data fim</label>
+          <input type="date" id="filter-date-end">
+        </div>
+        <button class="btn btn-blue" id="btn-filter">Filtrar</button>
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results-section" class="hidden">
       <div class="summary">
         <div class="card">
-          <div class="label">Conta</div>
-          <div class="value" id="account">—</div>
-        </div>
-        <div class="card">
-          <div class="label">Entradas</div>
+          <div class="label">Total Entradas</div>
           <div class="value green" id="total-in">R$ 0,00</div>
         </div>
         <div class="card">
-          <div class="label">Saídas</div>
+          <div class="label">Total Saidas</div>
           <div class="value red" id="total-out">R$ 0,00</div>
         </div>
         <div class="card">
           <div class="label">Saldo</div>
           <div class="value" id="balance">R$ 0,00</div>
         </div>
+        <div class="card">
+          <div class="label">Transacoes</div>
+          <div class="value" id="tx-count">0</div>
+        </div>
       </div>
 
+      <!-- Category Summary -->
+      <div class="cat-summary">
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Categoria</th>
+                <th class="align-right">Total</th>
+              </tr>
+            </thead>
+            <tbody id="cat-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Full transaction table -->
       <div class="table-wrapper">
         <table>
           <thead>
@@ -185,46 +395,65 @@
               <th>Mes</th>
               <th>Tipo</th>
               <th>Categoria</th>
-              <th>Valor</th>
+              <th class="align-right">Valor</th>
               <th>Ent.s/R</th>
               <th>Sai.s/A</th>
               <th>Descricao</th>
             </tr>
           </thead>
-          <tbody id="tbody"></tbody>
+          <tbody id="results-tbody"></tbody>
         </table>
+      </div>
+
+      <div class="results-actions">
+        <button class="btn" id="btn-export-csv">Exportar CSV</button>
       </div>
     </div>
 
+    <!-- Empty state -->
     <div class="empty" id="empty-state">
-      Selecione um arquivo OFX para visualizar as transações
+      Importe um arquivo OFX ou carregue um historico JSON para comecar
     </div>
   </div>
 
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
   <script>
-    const fileInput = document.getElementById('file-input');
-    const fileLabel = document.getElementById('file-label');
+    // ========== GLOBAL STATE ==========
+    window.store = { accounts: [], transactions: [] };
+    let previewTransactions = [];
+    let filteredTransactions = [];
 
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+    // ========== DOM REFS ==========
+    const elBankSelect = document.getElementById('bank-select');
+    const elAccountSelect = document.getElementById('account-select');
+    const elNewAccountField = document.getElementById('new-account-field');
+    const elNewAccountName = document.getElementById('new-account-name');
+    const elFileInput = document.getElementById('file-input');
+    const elFileLabel = document.getElementById('file-label');
+    const elPreviewArea = document.getElementById('preview-area');
+    const elPreviewCount = document.getElementById('preview-count');
+    const elPreviewTbody = document.getElementById('preview-tbody');
+    const elBtnAddToStore = document.getElementById('btn-add-to-store');
+    const elFilterAccount = document.getElementById('filter-account');
+    const elFilterDateStart = document.getElementById('filter-date-start');
+    const elFilterDateEnd = document.getElementById('filter-date-end');
+    const elBtnFilter = document.getElementById('btn-filter');
+    const elResultsSection = document.getElementById('results-section');
+    const elTotalIn = document.getElementById('total-in');
+    const elTotalOut = document.getElementById('total-out');
+    const elBalance = document.getElementById('balance');
+    const elTxCount = document.getElementById('tx-count');
+    const elCatTbody = document.getElementById('cat-tbody');
+    const elResultsTbody = document.getElementById('results-tbody');
+    const elBtnExportCsv = document.getElementById('btn-export-csv');
+    const elBtnSave = document.getElementById('btn-save');
+    const elJsonUpload = document.getElementById('json-upload');
+    const elEmptyState = document.getElementById('empty-state');
+    const elToast = document.getElementById('toast');
 
-      fileLabel.textContent = file.name;
-      fileLabel.classList.add('has-file');
-
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        let text = ev.target.result;
-        if (text.includes('\ufffd')) {
-          const latin1Reader = new FileReader();
-          latin1Reader.onload = (e2) => parseOFX(e2.target.result);
-          latin1Reader.readAsText(file, 'windows-1252');
-        } else {
-          parseOFX(text);
-        }
-      };
-      reader.readAsText(file, 'utf-8');
-    });
+    // ========== UTILITY FUNCTIONS (preserved exactly) ==========
 
     function extractTag(text, tag) {
       const re = new RegExp(`<${tag}>\\s*(.+?)(?:\\s*<|\\s*$)`, 's');
@@ -348,12 +577,80 @@
       return !INVESTMENT_KW.some(k => u.includes(k));
     }
 
-    function parseOFX(content) {
-      const account = extractTag(content, 'ACCTID');
-      const balanceStr = extractTag(content, 'BALAMT');
-      const balance = parseFloat(balanceStr.replace(',', '.')) || 0;
-      const bankId = document.getElementById('bank-select').value;
+    // ========== BANK NAME MAP ==========
+    const BANK_NAMES = {
+      '756': 'Sicoob',
+      '104': 'Caixa Economica',
+      '341': 'Itau',
+      '001': 'Banco do Brasil',
+    };
 
+    // ========== TOAST ==========
+    function showToast(msg) {
+      elToast.textContent = msg;
+      elToast.classList.add('show');
+      setTimeout(() => elToast.classList.remove('show'), 2500);
+    }
+
+    // ========== ACCOUNT MANAGEMENT ==========
+    function nextAccountId() {
+      if (window.store.accounts.length === 0) return '1';
+      const maxId = Math.max(...window.store.accounts.map(a => parseInt(a.id, 10)));
+      return String(maxId + 1);
+    }
+
+    function refreshAccountDropdowns() {
+      // Import account select
+      const currentImport = elAccountSelect.value;
+      elAccountSelect.innerHTML = '';
+      window.store.accounts.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = `${a.name} (${a.bankName})`;
+        elAccountSelect.appendChild(opt);
+      });
+      const newOpt = document.createElement('option');
+      newOpt.value = '__new__';
+      newOpt.textContent = 'Nova conta...';
+      elAccountSelect.appendChild(newOpt);
+
+      // Restore selection if possible
+      if (currentImport && [...elAccountSelect.options].some(o => o.value === currentImport)) {
+        elAccountSelect.value = currentImport;
+      }
+
+      // Filter account select
+      const currentFilter = elFilterAccount.value;
+      elFilterAccount.innerHTML = '';
+      const allOpt = document.createElement('option');
+      allOpt.value = '__all__';
+      allOpt.textContent = 'Todas';
+      elFilterAccount.appendChild(allOpt);
+      window.store.accounts.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = `${a.name} (${a.bankName})`;
+        elFilterAccount.appendChild(opt);
+      });
+      if (currentFilter && [...elFilterAccount.options].some(o => o.value === currentFilter)) {
+        elFilterAccount.value = currentFilter;
+      }
+
+      updateNewAccountFieldVisibility();
+      updateSaveButton();
+    }
+
+    function updateNewAccountFieldVisibility() {
+      const show = elAccountSelect.value === '__new__' || window.store.accounts.length === 0;
+      elNewAccountField.classList.toggle('hidden', !show);
+    }
+
+    function updateSaveButton() {
+      elBtnSave.disabled = window.store.transactions.length === 0;
+    }
+
+    // ========== PARSE OFX (returns array, does not render) ==========
+    function parseOFXToTransactions(content, bankId) {
       const blocks = [...content.matchAll(/<STMTTRN>([\s\S]*?)<\/STMTTRN>/g)];
       const transactions = blocks.map(m => {
         const block = m[1];
@@ -371,17 +668,53 @@
           memo,
         };
       });
-
       transactions.sort((a, b) => a.date.localeCompare(b.date));
-      render(account, balance, transactions);
+      return transactions;
     }
 
-    function render(account, balance, transactions) {
-      document.getElementById('empty-state').style.display = 'none';
-      document.getElementById('results').style.display = 'block';
-      document.getElementById('export-csv').style.display = 'inline-block';
+    // ========== RENDERING ==========
+    function renderTransactionRows(tbody, transactions) {
+      tbody.innerHTML = transactions.map(t => `
+        <tr>
+          <td>${t.date}</td>
+          <td>${t.month}</td>
+          <td><span class="tag ${t.type === 'Entrada' ? 'entrada' : 'saida'}">${t.type}</span></td>
+          <td>${t.category}</td>
+          <td class="align-right">${formatBRL(t.amount)}</td>
+          <td class="align-center">${t.entradaSemResgates ? 'TRUE' : ''}</td>
+          <td class="align-center">${t.saidaSemAplicacao ? 'TRUE' : ''}</td>
+          <td>${t.memo}</td>
+        </tr>
+      `).join('');
+    }
 
-      document.getElementById('account').textContent = account || '—';
+    function renderPreview(transactions) {
+      previewTransactions = transactions;
+      elPreviewCount.textContent = transactions.length;
+      renderTransactionRows(elPreviewTbody, transactions);
+      elPreviewArea.classList.remove('hidden');
+    }
+
+    function clearPreview() {
+      previewTransactions = [];
+      elPreviewTbody.innerHTML = '';
+      elPreviewArea.classList.add('hidden');
+      elFileLabel.textContent = 'Selecionar .ofx';
+      elFileLabel.classList.remove('has-file');
+      elFileInput.value = '';
+    }
+
+    function renderResults(transactions) {
+      filteredTransactions = transactions;
+
+      if (transactions.length === 0) {
+        elResultsSection.classList.add('hidden');
+        elEmptyState.classList.remove('hidden');
+        return;
+      }
+
+      elEmptyState.classList.add('hidden');
+      elResultsSection.classList.remove('hidden');
 
       let totalIn = 0, totalOut = 0;
       transactions.forEach(t => {
@@ -389,29 +722,229 @@
         else totalOut += t.amount;
       });
 
-      document.getElementById('total-in').textContent = formatBRL(totalIn);
-      document.getElementById('total-out').textContent = formatBRL(totalOut);
-      document.getElementById('balance').textContent = formatBRL(balance || totalIn + totalOut);
+      elTotalIn.textContent = formatBRL(totalIn);
+      elTotalOut.textContent = formatBRL(totalOut);
+      elBalance.textContent = formatBRL(totalIn + totalOut);
+      const bal = totalIn + totalOut;
+      elBalance.className = 'value ' + (bal >= 0 ? 'green' : 'red');
+      elTxCount.textContent = transactions.length;
 
-      const tbody = document.getElementById('tbody');
-      tbody.innerHTML = transactions.map(t => `
+      // Category summary
+      const catMap = {};
+      transactions.forEach(t => {
+        catMap[t.category] = (catMap[t.category] || 0) + t.amount;
+      });
+      const catEntries = Object.entries(catMap).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+      elCatTbody.innerHTML = catEntries.map(([cat, total]) => `
         <tr>
-          <td>${t.date}</td>
-          <td>${t.month}</td>
-          <td><span class="tag ${t.type === 'Entrada' ? 'entrada' : 'saida'}">${t.type}</span></td>
-          <td>${t.category}</td>
-          <td>${formatBRL(t.amount)}</td>
-          <td>${t.entradaSemResgates ? 'TRUE' : ''}</td>
-          <td>${t.saidaSemAplicacao ? 'TRUE' : ''}</td>
-          <td>${t.memo}</td>
+          <td>${cat}</td>
+          <td class="align-right" style="color: ${total >= 0 ? '#3fb950' : '#f85149'}; font-family: 'SF Mono', 'Fira Code', monospace;">${formatBRL(total)}</td>
         </tr>
       `).join('');
 
-      window._transactions = transactions;
+      // Full table
+      renderTransactionRows(elResultsTbody, transactions);
     }
 
-    document.getElementById('export-csv').addEventListener('click', () => {
-      const t = window._transactions;
+    // ========== DATE UTILS ==========
+    // Convert dd/mm/yyyy to Date object for filtering
+    function parseDateToObj(dateStr) {
+      const p = dateStr.split('/');
+      if (p.length !== 3) return null;
+      return new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]));
+    }
+
+    // ========== FILTERING ==========
+    function applyFilters() {
+      const accountId = elFilterAccount.value;
+      const dateStart = elFilterDateStart.value ? new Date(elFilterDateStart.value) : null;
+      const dateEnd = elFilterDateEnd.value ? new Date(elFilterDateEnd.value) : null;
+
+      // Set dateEnd to end of day
+      if (dateEnd) dateEnd.setHours(23, 59, 59, 999);
+
+      let txs = window.store.transactions;
+
+      if (accountId !== '__all__') {
+        txs = txs.filter(t => t.accountId === accountId);
+      }
+
+      if (dateStart) {
+        txs = txs.filter(t => {
+          const d = parseDateToObj(t.date);
+          return d && d >= dateStart;
+        });
+      }
+
+      if (dateEnd) {
+        txs = txs.filter(t => {
+          const d = parseDateToObj(t.date);
+          return d && d <= dateEnd;
+        });
+      }
+
+      renderResults(txs);
+    }
+
+    // ========== DUPLICATE DETECTION ==========
+    function isDuplicate(tx, accountId) {
+      return window.store.transactions.some(existing =>
+        existing.accountId === accountId &&
+        existing.date === tx.date &&
+        existing.amount === tx.amount &&
+        existing.memo === tx.memo
+      );
+    }
+
+    // ========== EVENT HANDLERS ==========
+
+    // Account select change
+    elAccountSelect.addEventListener('change', updateNewAccountFieldVisibility);
+
+    // Bank select change — filter account dropdown to show only matching bank accounts
+    // (but always show "Nova conta...")
+    // Actually, per spec, account dropdown lists ALL existing accounts + "Nova conta..."
+    // No bank-based filtering needed.
+
+    // OFX file import
+    elFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      elFileLabel.textContent = file.name;
+      elFileLabel.classList.add('has-file');
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        let text = ev.target.result;
+        if (text.includes('\ufffd')) {
+          const latin1Reader = new FileReader();
+          latin1Reader.onload = (e2) => {
+            const txs = parseOFXToTransactions(e2.target.result, elBankSelect.value);
+            renderPreview(txs);
+          };
+          latin1Reader.readAsText(file, 'windows-1252');
+        } else {
+          const txs = parseOFXToTransactions(text, elBankSelect.value);
+          renderPreview(txs);
+        }
+      };
+      reader.readAsText(file, 'utf-8');
+    });
+
+    // Add to store
+    elBtnAddToStore.addEventListener('click', () => {
+      if (previewTransactions.length === 0) return;
+
+      let accountId;
+      const bankId = elBankSelect.value;
+      const bankName = BANK_NAMES[bankId] || bankId;
+
+      if (elAccountSelect.value === '__new__' || window.store.accounts.length === 0) {
+        const name = elNewAccountName.value.trim();
+        if (!name) {
+          elNewAccountName.focus();
+          elNewAccountName.style.borderColor = '#f85149';
+          setTimeout(() => elNewAccountName.style.borderColor = '', 2000);
+          return;
+        }
+        accountId = nextAccountId();
+        window.store.accounts.push({
+          id: accountId,
+          name,
+          bankId,
+          bankName,
+        });
+        elNewAccountName.value = '';
+      } else {
+        accountId = elAccountSelect.value;
+      }
+
+      // Add transactions with duplicate detection
+      let added = 0, skipped = 0;
+      previewTransactions.forEach(tx => {
+        if (isDuplicate(tx, accountId)) {
+          skipped++;
+          return;
+        }
+        window.store.transactions.push({
+          accountId,
+          date: tx.date,
+          month: tx.month,
+          type: tx.type,
+          category: tx.category,
+          amount: tx.amount,
+          entradaSemResgates: tx.entradaSemResgates,
+          saidaSemAplicacao: tx.saidaSemAplicacao,
+          memo: tx.memo,
+        });
+        added++;
+      });
+
+      clearPreview();
+      refreshAccountDropdowns();
+
+      // Select the account just used
+      elAccountSelect.value = accountId;
+      updateNewAccountFieldVisibility();
+
+      // Show all results
+      applyFilters();
+
+      const msg = skipped > 0
+        ? `${added} adicionadas, ${skipped} duplicadas ignoradas`
+        : `${added} transacoes adicionadas`;
+      showToast(msg);
+    });
+
+    // Filter button
+    elBtnFilter.addEventListener('click', applyFilters);
+
+    // JSON upload (Carregar Historico)
+    elJsonUpload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (!data.accounts || !data.transactions) {
+            throw new Error('Invalid format');
+          }
+          window.store = {
+            accounts: data.accounts,
+            transactions: data.transactions,
+          };
+          refreshAccountDropdowns();
+          applyFilters();
+          showToast(`Historico carregado: ${data.accounts.length} contas, ${data.transactions.length} transacoes`);
+        } catch (err) {
+          showToast('Erro ao carregar JSON: ' + err.message);
+          elToast.style.background = '#f85149';
+          setTimeout(() => elToast.style.background = '#238636', 3000);
+        }
+      };
+      reader.readAsText(file, 'utf-8');
+      elJsonUpload.value = '';
+    });
+
+    // Save JSON (Salvar Historico)
+    elBtnSave.addEventListener('click', () => {
+      const json = JSON.stringify(window.store, null, 2);
+      const blob = new Blob(['\uFEFF' + json], { type: 'application/json;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ofx-historico.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Historico salvo');
+    });
+
+    // Export CSV
+    elBtnExportCsv.addEventListener('click', () => {
+      const t = filteredTransactions;
       if (!t || !t.length) return;
 
       const header = 'Data,Mês,Tipo,Categoria,Valor,Conta_Entrada_sem_resgates,Conta_Saida_sem_aplicação,Descricao\n';
@@ -427,6 +960,9 @@
       a.click();
       URL.revokeObjectURL(url);
     });
+
+    // ========== INIT ==========
+    refreshAccountDropdowns();
   </script>
 </body>
 </html>
