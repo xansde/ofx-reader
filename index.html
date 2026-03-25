@@ -257,6 +257,60 @@
       justify-content: flex-end;
       margin-top: 1rem;
     }
+
+    /* Auto-save note */
+    .auto-save-note {
+      font-size: 0.75rem;
+      color: #484f58;
+      margin-top: 0.25rem;
+    }
+
+    /* Multi-select */
+    .multi-select {
+      position: relative;
+      min-width: 250px;
+    }
+    .multi-select-toggle {
+      background: #161b22;
+      border: 1px solid #30363d;
+      color: #e1e4e8;
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .multi-select-toggle:hover { border-color: #58a6ff; }
+    .multi-select-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      margin-top: 4px;
+      max-height: 250px;
+      overflow-y: auto;
+      z-index: 100;
+      padding: 0.5rem 0;
+    }
+    .multi-select.open .multi-select-dropdown { display: block; }
+    .multi-select-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: #e1e4e8;
+    }
+    .multi-select-option:hover { background: #1c2129; }
+    .multi-select-option input { accent-color: #58a6ff; }
+    .multi-select-separator {
+      border-top: 1px solid #30363d;
+      margin: 0.3rem 0;
+    }
   </style>
 </head>
 <body>
@@ -264,11 +318,14 @@
 
     <!-- Header -->
     <div class="header-bar">
-      <h1>OFX Reader</h1>
+      <div>
+        <h1>OFX Reader</h1>
+        <div class="auto-save-note">Dados salvos automaticamente no navegador</div>
+      </div>
       <div class="header-actions">
-        <label class="btn" for="json-upload">Carregar Historico</label>
+        <label class="btn" for="json-upload">Importar Historico</label>
         <input type="file" id="json-upload" accept=".json">
-        <button class="btn" id="btn-save" disabled>Salvar Historico</button>
+        <button class="btn" id="btn-save" disabled>Exportar Historico</button>
       </div>
     </div>
 
@@ -333,20 +390,34 @@
       <div class="section-title">Filtros</div>
       <div class="controls">
         <div class="field">
-          <label>Conta</label>
-          <select id="filter-account">
-            <option value="__all__">Todas</option>
+          <label>Banco</label>
+          <select id="bank-filter" onchange="filterByBank()">
+            <option value="all">Todos os bancos</option>
           </select>
         </div>
         <div class="field">
+          <label>Conta</label>
+          <div class="multi-select" id="account-filter">
+            <div class="multi-select-toggle" onclick="toggleMultiSelect('account-filter')">
+              Todas as contas
+            </div>
+            <div class="multi-select-dropdown">
+              <label class="multi-select-option">
+                <input type="checkbox" value="all" checked onchange="toggleAllAccounts(this)"> Todas
+              </label>
+              <div class="multi-select-separator"></div>
+              <!-- account options populated dynamically -->
+            </div>
+          </div>
+        </div>
+        <div class="field">
           <label>Data inicio</label>
-          <input type="date" id="filter-date-start">
+          <input type="date" id="filter-date-start" onchange="applyFilters()">
         </div>
         <div class="field">
           <label>Data fim</label>
-          <input type="date" id="filter-date-end">
+          <input type="date" id="filter-date-end" onchange="applyFilters()">
         </div>
-        <button class="btn btn-blue" id="btn-filter">Filtrar</button>
       </div>
     </div>
 
@@ -420,8 +491,25 @@
   <div class="toast" id="toast"></div>
 
   <script>
+    // ========== LOCALSTORAGE HELPERS ==========
+    function saveStore() {
+      localStorage.setItem('ofx-store', JSON.stringify(window.store));
+    }
+
+    function loadStore() {
+      const saved = localStorage.getItem('ofx-store');
+      if (saved) {
+        try {
+          window.store = JSON.parse(saved);
+          return true;
+        } catch(e) { }
+      }
+      window.store = { accounts: [], transactions: [] };
+      return false;
+    }
+
     // ========== GLOBAL STATE ==========
-    window.store = { accounts: [], transactions: [] };
+    loadStore();
     let previewTransactions = [];
     let filteredTransactions = [];
 
@@ -436,10 +524,10 @@
     const elPreviewCount = document.getElementById('preview-count');
     const elPreviewTbody = document.getElementById('preview-tbody');
     const elBtnAddToStore = document.getElementById('btn-add-to-store');
-    const elFilterAccount = document.getElementById('filter-account');
+    const elBankFilter = document.getElementById('bank-filter');
+    const elAccountFilter = document.getElementById('account-filter');
     const elFilterDateStart = document.getElementById('filter-date-start');
     const elFilterDateEnd = document.getElementById('filter-date-end');
-    const elBtnFilter = document.getElementById('btn-filter');
     const elResultsSection = document.getElementById('results-section');
     const elTotalIn = document.getElementById('total-in');
     const elTotalOut = document.getElementById('total-out');
@@ -619,25 +707,140 @@
         elAccountSelect.value = currentImport;
       }
 
-      // Filter account select
-      const currentFilter = elFilterAccount.value;
-      elFilterAccount.innerHTML = '';
-      const allOpt = document.createElement('option');
-      allOpt.value = '__all__';
-      allOpt.textContent = 'Todas';
-      elFilterAccount.appendChild(allOpt);
-      window.store.accounts.forEach(a => {
-        const opt = document.createElement('option');
-        opt.value = a.id;
-        opt.textContent = `${a.name} (${a.bankName})`;
-        elFilterAccount.appendChild(opt);
-      });
-      if (currentFilter && [...elFilterAccount.options].some(o => o.value === currentFilter)) {
-        elFilterAccount.value = currentFilter;
-      }
+      // Bank filter dropdown
+      refreshBankFilter();
+
+      // Account multi-select
+      refreshAccountMultiSelect();
 
       updateNewAccountFieldVisibility();
       updateSaveButton();
+    }
+
+    function refreshBankFilter() {
+      const current = elBankFilter.value;
+      elBankFilter.innerHTML = '<option value="all">Todos os bancos</option>';
+      const banks = new Map();
+      window.store.accounts.forEach(a => {
+        if (!banks.has(a.bankId)) {
+          banks.set(a.bankId, a.bankName);
+        }
+      });
+      banks.forEach((name, id) => {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = name;
+        elBankFilter.appendChild(opt);
+      });
+      if (current && [...elBankFilter.options].some(o => o.value === current)) {
+        elBankFilter.value = current;
+      }
+    }
+
+    function refreshAccountMultiSelect() {
+      const dropdown = elAccountFilter.querySelector('.multi-select-dropdown');
+      // Keep "Todas" checkbox
+      const allCheckbox = dropdown.querySelector('input[value="all"]');
+      const separator = dropdown.querySelector('.multi-select-separator');
+
+      // Remove old account options (everything after separator)
+      while (separator.nextElementSibling) {
+        separator.nextElementSibling.remove();
+      }
+
+      // Add account options
+      window.store.accounts.forEach(a => {
+        const label = document.createElement('label');
+        label.className = 'multi-select-option';
+        label.innerHTML = `<input type="checkbox" value="${a.id}" checked onchange="onAccountCheckChange()"> ${a.name} (${a.bankName})`;
+        dropdown.appendChild(label);
+      });
+
+      allCheckbox.checked = true;
+      updateMultiSelectToggleText();
+    }
+
+    // ========== MULTI-SELECT LOGIC ==========
+    function toggleMultiSelect(id) {
+      const el = document.getElementById(id);
+      el.classList.toggle('open');
+    }
+
+    function toggleAllAccounts(checkbox) {
+      const dropdown = elAccountFilter.querySelector('.multi-select-dropdown');
+      const accountBoxes = dropdown.querySelectorAll('input[type="checkbox"]:not([value="all"])');
+      accountBoxes.forEach(cb => cb.checked = checkbox.checked);
+      updateMultiSelectToggleText();
+      applyFilters();
+    }
+
+    function onAccountCheckChange() {
+      const dropdown = elAccountFilter.querySelector('.multi-select-dropdown');
+      const allCheckbox = dropdown.querySelector('input[value="all"]');
+      const accountBoxes = dropdown.querySelectorAll('input[type="checkbox"]:not([value="all"])');
+      const allChecked = [...accountBoxes].every(cb => cb.checked);
+      allCheckbox.checked = allChecked;
+      updateMultiSelectToggleText();
+      applyFilters();
+    }
+
+    function updateMultiSelectToggleText() {
+      const toggle = elAccountFilter.querySelector('.multi-select-toggle');
+      const dropdown = elAccountFilter.querySelector('.multi-select-dropdown');
+      const allCheckbox = dropdown.querySelector('input[value="all"]');
+      const accountBoxes = dropdown.querySelectorAll('input[type="checkbox"]:not([value="all"])');
+      const checked = [...accountBoxes].filter(cb => cb.checked);
+
+      if (allCheckbox.checked || checked.length === accountBoxes.length) {
+        toggle.textContent = 'Todas as contas';
+      } else if (checked.length === 0) {
+        toggle.textContent = 'Selecionar contas...';
+      } else if (checked.length === 1) {
+        const account = window.store.accounts.find(a => a.id === checked[0].value);
+        toggle.textContent = account ? account.name : '1 conta selecionada';
+      } else {
+        toggle.textContent = `${checked.length} contas selecionadas`;
+      }
+    }
+
+    function getSelectedAccountIds() {
+      const dropdown = elAccountFilter.querySelector('.multi-select-dropdown');
+      const allCheckbox = dropdown.querySelector('input[value="all"]');
+      if (allCheckbox.checked) return '__all__';
+      const accountBoxes = dropdown.querySelectorAll('input[type="checkbox"]:not([value="all"])');
+      return [...accountBoxes].filter(cb => cb.checked).map(cb => cb.value);
+    }
+
+    // Close multi-select on outside click
+    document.addEventListener('click', (e) => {
+      if (!elAccountFilter.contains(e.target)) {
+        elAccountFilter.classList.remove('open');
+      }
+    });
+
+    // ========== BANK FILTER ==========
+    function filterByBank() {
+      const bankId = elBankFilter.value;
+      const dropdown = elAccountFilter.querySelector('.multi-select-dropdown');
+      const allCheckbox = dropdown.querySelector('input[value="all"]');
+      const accountBoxes = dropdown.querySelectorAll('input[type="checkbox"]:not([value="all"])');
+
+      if (bankId === 'all') {
+        allCheckbox.checked = true;
+        accountBoxes.forEach(cb => cb.checked = true);
+      } else {
+        allCheckbox.checked = false;
+        accountBoxes.forEach(cb => {
+          const account = window.store.accounts.find(a => a.id === cb.value);
+          cb.checked = account && account.bankId === bankId;
+        });
+        // Check if all ended up selected
+        const allChecked = [...accountBoxes].every(cb => cb.checked);
+        allCheckbox.checked = allChecked;
+      }
+
+      updateMultiSelectToggleText();
+      applyFilters();
     }
 
     function updateNewAccountFieldVisibility() {
@@ -756,7 +959,7 @@
 
     // ========== FILTERING ==========
     function applyFilters() {
-      const accountId = elFilterAccount.value;
+      const selectedIds = getSelectedAccountIds();
       const dateStart = elFilterDateStart.value ? new Date(elFilterDateStart.value) : null;
       const dateEnd = elFilterDateEnd.value ? new Date(elFilterDateEnd.value) : null;
 
@@ -765,8 +968,8 @@
 
       let txs = window.store.transactions;
 
-      if (accountId !== '__all__') {
-        txs = txs.filter(t => t.accountId === accountId);
+      if (selectedIds !== '__all__') {
+        txs = txs.filter(t => selectedIds.includes(t.accountId));
       }
 
       if (dateStart) {
@@ -881,6 +1084,7 @@
         added++;
       });
 
+      saveStore();
       clearPreview();
       refreshAccountDropdowns();
 
@@ -897,10 +1101,7 @@
       showToast(msg);
     });
 
-    // Filter button
-    elBtnFilter.addEventListener('click', applyFilters);
-
-    // JSON upload (Carregar Historico)
+    // JSON upload (Importar Historico)
     elJsonUpload.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -916,9 +1117,10 @@
             accounts: data.accounts,
             transactions: data.transactions,
           };
+          saveStore();
           refreshAccountDropdowns();
           applyFilters();
-          showToast(`Historico carregado: ${data.accounts.length} contas, ${data.transactions.length} transacoes`);
+          showToast(`Historico importado: ${data.accounts.length} contas, ${data.transactions.length} transacoes`);
         } catch (err) {
           showToast('Erro ao carregar JSON: ' + err.message);
           elToast.style.background = '#f85149';
@@ -939,7 +1141,7 @@
       a.download = 'ofx-historico.json';
       a.click();
       URL.revokeObjectURL(url);
-      showToast('Historico salvo');
+      showToast('Historico exportado');
     });
 
     // Export CSV
@@ -963,6 +1165,9 @@
 
     // ========== INIT ==========
     refreshAccountDropdowns();
+    if (window.store.transactions.length > 0) {
+      applyFilters();
+    }
   </script>
 </body>
 </html>
